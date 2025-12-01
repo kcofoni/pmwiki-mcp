@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  pmwiki-mcp:
+    build: .
+    container_name: pmwiki-mcp-server
+    ports:
+      - "3000:3000"
+    volumes:
+      # Remplacez par le chemin réel vers votre wiki.d
+      - /chemin/vers/pmwiki/wiki.d:/wiki_data:ro
+    environment:
+      - WIKI_DIR=/wiki_data
+    restart: unless-stopped
+    networks:
+      - pmwiki-network
+
+networks:
+  pmwiki-network:
+    driver: bridge
