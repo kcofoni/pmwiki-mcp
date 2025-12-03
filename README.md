@@ -13,10 +13,36 @@ Le serveur utilise le protocole MCP avec transport SSE (Server-Sent Events) pour
 
 ## Démarrage
 
-### Avec Docker Compose
+### Avec Docker Compose (image Docker Hub)
+
+La méthode la plus simple est d'utiliser l'image publiée sur Docker Hub :
+
+```bash
+docker compose up -d
+```
+
+### Avec Docker Compose (build local)
+
+Si vous souhaitez construire l'image localement :
+
+1. Éditez `docker-compose.yml` et commentez la ligne `image:`, puis décommentez la ligne `build: .`
+2. Lancez :
 
 ```bash
 docker compose up -d --build
+```
+
+### Utilisation directe avec Docker
+
+Sans docker-compose, vous pouvez aussi lancer directement :
+
+```bash
+docker run -d \
+  --name pmwiki-mcp-server \
+  -p 3000:3000 \
+  -v /chemin/vers/votre/wiki.d:/wiki_data:ro \
+  -e WIKI_DIR=/wiki_data \
+  kcofoni/pmwiki-mcp:latest
 ```
 
 Le serveur sera accessible sur `http://localhost:3000` (ou `http://vmtest:3000` depuis d'autres machines du réseau).
@@ -101,6 +127,17 @@ volumes:
 - Remplacez ce chemin par le chemin réel vers votre répertoire `wiki.d` de PmWiki
 - Le volume est monté en lecture seule (`:ro`) pour des raisons de sécurité
 - `/wiki_data` est le chemin interne au conteneur (ne pas modifier)
+
+## Docker Hub
+
+L'image est disponible publiquement sur Docker Hub :
+- **Repository** : [kcofoni/pmwiki-mcp](https://hub.docker.com/r/kcofoni/pmwiki-mcp)
+- **Tag latest** : `kcofoni/pmwiki-mcp:latest`
+
+Pour récupérer la dernière version :
+```bash
+docker pull kcofoni/pmwiki-mcp:latest
+```
 
 ## Architecture technique
 

@@ -3,8 +3,6 @@ version: '3.8'
 services:
   pmwiki-mcp:
     image: kcofoni/pmwiki-mcp:latest
-    # Pour construire localement au lieu d'utiliser l'image Docker Hub, commentez la ligne ci-dessus et décommentez celle ci-dessous :
-    # build: .
     container_name: pmwiki-mcp-server
     ports:
       - "3000:3000"
