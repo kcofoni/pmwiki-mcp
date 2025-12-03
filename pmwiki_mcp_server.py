@@ -1,10 +1,29 @@
-# pmwiki_mcp_server.py
-from mcp.server import Server
-from mcp.types import Tool, TextContent, Resource
-import mcp.types as types
+"""
+Serveur MCP (Model Context Protocol) pour PmWiki.
+
+Ce serveur expose les pages d'un wiki PmWiki via le protocole MCP en utilisant
+le transport SSE (Server-Sent Events). Il permet à un LLM d'interagir avec le wiki
+pour lire, rechercher et lister les pages.
+
+Fonctionnalités :
+- Lecture de pages wiki
+- Recherche de texte dans le wiki
+- Listage des pages disponibles
+- Exposition des pages comme ressources MCP
+"""
+import asyncio
+import logging
 import os
 import re
-import logging
+
+import mcp.types as types
+import uvicorn
+from mcp.server import Server
+from mcp.server.sse import SseServerTransport
+from mcp.types import Resource, TextContent, Tool
+from starlette.applications import Starlette
+from starlette.responses import Response
+from starlette.routing import Mount, Route
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +55,7 @@ def parse_pmwiki_file(filepath):
             return text
         return ""
     except Exception as e:
-        logger.error(f"Erreur lors de la lecture de {filepath}: {str(e)}")
+        logger.error("Erreur lors de la lecture de %s: %s", filepath, str(e))
         return f"Erreur lors de la lecture: {str(e)}"
 
 
@@ -51,7 +70,7 @@ async def list_resources() -> list[Resource]:
     resources = []
 
     if not os.path.exists(WIKI_DIR):
-        logger.warning(f"Le répertoire {WIKI_DIR} n'existe pas")
+        logger.warning("Le répertoire %s n'existe pas", WIKI_DIR)
         return resources
 
     try:
@@ -70,9 +89,9 @@ async def list_resources() -> list[Resource]:
                     )
                 )
 
-        logger.info(f"Trouvé {len(resources)} pages wiki")
+        logger.info("Trouvé %d pages wiki", len(resources))
     except Exception as e:
-        logger.error(f"Erreur lors du listing des ressources: {str(e)}")
+        logger.error("Erreur lors du listing des ressources: %s", str(e))
 
     return resources
 
@@ -204,7 +223,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
     elif name == "read_page":
         page_name = arguments["page_name"]
-        # Convertir Main/HomePage en Main.HomePage
+        # Convertir Main/HomePage en Main.PageName
         filename = page_name.replace("/", ".")
         filepath = os.path.join(WIKI_DIR, filename)
 
@@ -219,7 +238,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
             suggestion = ""
             if similar:
-                suggestion = f"\n\nPages similaires trouvées:\n" + "\n".join(
+                suggestion = "\n\nPages similaires trouvées:\n" + "\n".join(
                     [f"- {p}" for p in similar[:5]]
                 )
 
@@ -294,31 +313,29 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         return [TextContent(type="text", text=f"Outil inconnu: {name}")]
 
 
-# Point d'entrée pour SSE
 async def run_sse_server():
     """Démarre le serveur en mode SSE"""
-    from mcp.server.sse import SseServerTransport
-    from starlette.applications import Starlette
-    from starlette.routing import Route
-    import uvicorn
+    # Créer le transport SSE
+    sse = SseServerTransport("/messages/")
 
     async def handle_sse(request):
-        async with SseServerTransport("/messages") as transport:
+        """Gère les connexions SSE (GET /sse)"""
+        async with sse.connect_sse(
+            request.scope, request.receive, request._send
+        ) as streams:
             await mcp_server.run(
-                transport.read_stream,
-                transport.write_stream,
+                streams[0],
+                streams[1],
                 mcp_server.create_initialization_options(),
             )
-        return transport.get_response()
+        return Response()
 
-    async def handle_messages(request):
-        return {"status": "ok"}
-
+    # Créer l'application Starlette
     app = Starlette(
         debug=True,
         routes=[
-            Route("/sse", endpoint=handle_sse),
-            Route("/messages", endpoint=handle_messages, methods=["POST"]),
+            Route("/sse", endpoint=handle_sse, methods=["GET"]),
+            Mount("/messages/", app=sse.handle_post_message),
         ],
     )
 
@@ -328,9 +345,7 @@ async def run_sse_server():
 
 
 if __name__ == "__main__":
-    import asyncio
-
-    logger.info(f"Démarrage du serveur MCP PmWiki sur le port 3000")
-    logger.info(f"Répertoire wiki: {WIKI_DIR}")
+    logger.info("Démarrage du serveur MCP PmWiki en mode SSE sur le port 3000")
+    logger.info("Répertoire wiki: %s", WIKI_DIR)
 
     asyncio.run(run_sse_server())

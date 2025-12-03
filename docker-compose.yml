@@ -8,7 +8,7 @@ services:
       - "3000:3000"
     volumes:
       # Remplacez par le chemin réel vers votre wiki.d
-      - /chemin/vers/pmwiki/wiki.d:/wiki_data:ro
+      - /home/docker/appdata/html/wiki.d:/wiki_data:ro
     environment:
       - WIKI_DIR=/wiki_data
     restart: unless-stopped

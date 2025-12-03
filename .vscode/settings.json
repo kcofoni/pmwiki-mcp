@@ -1,0 +1,13 @@
+{
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "python.linting.pylintArgs": [
+    "--disable=line-too-long,broad-except,protected-access",
+    "--max-line-length=120"
+  ],
+  "editor.rulers": [120],
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": [
+    "--line-length=120"
+  ]
+}

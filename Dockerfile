@@ -17,8 +17,4 @@ COPY pmwiki_mcp_server.py .
 # Exposer le port SSE
 EXPOSE 3000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3000/messages')" || exit 1
-
-CMD ["python", "pmwiki_mcp_server.py"]
+CMD ["python", "-u", "pmwiki_mcp_server.py"]

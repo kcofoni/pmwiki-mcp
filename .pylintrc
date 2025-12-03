@@ -1,0 +1,19 @@
+[MESSAGES CONTROL]
+# Désactiver certains warnings
+disable=line-too-long,
+        broad-except,
+        protected-access
+
+[FORMAT]
+# Longueur maximale d'une ligne (par défaut 100, augmenté pour plus de flexibilité)
+max-line-length=120
+
+[BASIC]
+# Style de nommage plus permissif
+good-names=i,j,k,ex,Run,_,f,e
+
+[DESIGN]
+# Limites raisonnables
+max-args=7
+max-locals=20
+max-branches=15
