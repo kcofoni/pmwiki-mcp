@@ -2,19 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Installer les dépendances système
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier et installer les dépendances Python
+# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier le serveur
+# Copy the server
 COPY pmwiki_mcp_server.py .
 
-# Exposer le port SSE
+# Expose SSE port
 EXPOSE 3000
 
 CMD ["python", "-u", "pmwiki_mcp_server.py"]

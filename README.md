@@ -1,70 +1,72 @@
-# Serveur MCP PmWiki
+# PmWiki MCP Server
 
-Serveur MCP (Model Context Protocol) pour interfacer un LLM avec PmWiki.
+MCP (Model Context Protocol) server for interfacing an LLM with PmWiki.
+
+[Version française / French version](README_fr.md)
 
 ## Architecture
 
-Le serveur utilise le protocole MCP avec transport SSE (Server-Sent Events) pour permettre à un LLM d'interagir avec votre wiki PmWiki.
+The server uses the MCP protocol with SSE (Server-Sent Events) transport to enable an LLM to interact with your PmWiki instance.
 
 ### Endpoints
 
-- `GET /sse` : Connexion SSE pour établir la communication bidirectionnelle
-- `POST /messages/` : Réception des messages du client MCP
+- `GET /sse`: SSE connection to establish bidirectional communication
+- `POST /messages/`: Receive messages from the MCP client
 
-## Démarrage
+## Getting Started
 
-### Avec Docker Compose (image Docker Hub)
+### With Docker Compose (Docker Hub image)
 
-La méthode la plus simple est d'utiliser l'image publiée sur Docker Hub :
+The simplest method is to use the published image from Docker Hub:
 
 ```bash
 docker compose up -d
 ```
 
-### Avec Docker Compose (build local)
+### With Docker Compose (local build)
 
-Si vous souhaitez construire l'image localement :
+If you want to build the image locally:
 
-1. Éditez `docker-compose.yml` et commentez la ligne `image:`, puis décommentez la ligne `build: .`
-2. Lancez :
+1. Edit `docker-compose.yml` and comment out the `image:` line, then uncomment the `build: .` line
+2. Run:
 
 ```bash
 docker compose up -d --build
 ```
 
-### Utilisation directe avec Docker
+### Direct Docker Usage
 
-Sans docker-compose, vous pouvez aussi lancer directement :
+Without docker-compose, you can run directly:
 
 ```bash
 docker run -d \
   --name pmwiki-mcp-server \
   -p 3000:3000 \
-  -v /chemin/vers/votre/wiki.d:/wiki_data:ro \
+  -v /path/to/your/wiki.d:/wiki_data:ro \
   -e WIKI_DIR=/wiki_data \
   kcofoni/pmwiki-mcp:latest
 ```
 
-Le serveur sera accessible sur `http://localhost:3000` (ou `http://vmtest:3000` depuis d'autres machines du réseau).
+The server will be accessible at `http://localhost:3000` (or `http://vmtest:3000` from other machines on the network).
 
-### Vérification
+### Verification
 
 ```bash
-# Vérifier que le serveur fonctionne
+# Check that the server is running
 docker logs pmwiki-mcp-server
 
-# Tester la connexion SSE
+# Test the SSE connection
 curl -N http://localhost:3000/sse
 ```
 
-## Configuration du client
+## Client Configuration
 
 ### Claude Desktop
 
-Ajoutez cette configuration à votre fichier de configuration Claude Desktop :
+Add this configuration to your Claude Desktop configuration file:
 
-**Sur macOS** : `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Sur Windows** : `%APPDATA%\Claude\claude_desktop_config.json`
+**On macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**On Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -80,118 +82,125 @@ Ajoutez cette configuration à votre fichier de configuration Claude Desktop :
 }
 ```
 
-**Notes importantes** :
-- `vmtest` est le nom de la machine qui héberge le conteneur Docker du serveur MCP
-- Remplacez `vmtest` par :
-  - `localhost` si Claude Desktop s'exécute sur la même machine que le serveur
-  - Le nom d'hôte ou l'adresse IP de la machine qui exécute le conteneur Docker (ex: `192.168.1.100:3000/sse`)
-- L'outil `mcp-proxy` doit être installé (il est généralement fourni avec Claude Desktop)
-- Le proxy gère la connexion SSE entre Claude Desktop et le serveur MCP
+**Important notes**:
+- `vmtest` is the hostname of the machine hosting the MCP server Docker container
+- Replace `vmtest` with:
+  - `localhost` if Claude Desktop runs on the same machine as the server
+  - The hostname or IP address of the machine running the Docker container (e.g., `192.168.1.100:3000/sse`)
+- The `mcp-proxy` tool must be installed (usually provided with Claude Desktop)
+- The proxy handles the SSE connection between Claude Desktop and the MCP server
 
-## Fonctionnalités disponibles
+## Available Features
 
-Une fois connecté, votre LLM aura accès à :
+Once connected, your LLM will have access to:
 
-### Ressources
+### Resources
 
-- Toutes les pages du wiki sont exposées comme ressources avec l'URI `pmwiki://Group.PageName`
+- All wiki pages are exposed as resources with the URI `pmwiki://Group.PageName`
 
-### Outils
+### Tools
 
-1. **search_wiki** : Recherche du texte dans toutes les pages
-   - Paramètres :
-     - `query` (requis) : Texte à rechercher
-     - `case_sensitive` (optionnel) : Recherche sensible à la casse (défaut: false)
+1. **search_wiki**: Search for text across all pages
+   - Parameters:
+     - `query` (required): Text to search for
+     - `case_sensitive` (optional): Case-sensitive search (default: false)
 
-2. **read_page** : Lit le contenu complet d'une page
-   - Paramètres :
-     - `page_name` (requis) : Nom de la page (ex: `Main.HomePage` ou `Main/HomePage`)
+2. **read_page**: Read the complete content of a page
+   - Parameters:
+     - `page_name` (required): Page name (e.g., `Main.HomePage` or `Main/HomePage`)
 
-3. **list_pages** : Liste toutes les pages du wiki
-   - Paramètres :
-     - `group` (optionnel) : Filtre par groupe
+3. **list_pages**: List all wiki pages
+   - Parameters:
+     - `group` (optional): Filter by group
 
 ## Configuration
 
-### Montage du répertoire wiki
+### Wiki Directory Mount
 
-Le répertoire wiki de PmWiki est monté depuis la machine hôte vers le conteneur Docker :
+The PmWiki directory is mounted from the host machine to the Docker container:
 
 ```yaml
 volumes:
   - /home/docker/appdata/html/wiki.d:/wiki_data:ro
 ```
 
-**Important** :
-- `/home/docker/appdata/html/wiki.d` est le chemin **sur la machine hôte** - c'est un exemple à adapter
-- Remplacez ce chemin par le chemin réel vers votre répertoire `wiki.d` de PmWiki
-- Le volume est monté en lecture seule (`:ro`) pour des raisons de sécurité
-- `/wiki_data` est le chemin interne au conteneur (ne pas modifier)
+**Important**:
+- `/home/docker/appdata/html/wiki.d` is the path **on the host machine** - this is an example to adapt
+- Replace this path with the actual path to your PmWiki `wiki.d` directory
+- The volume is mounted read-only (`:ro`) for security reasons
+- `/wiki_data` is the internal container path (do not modify)
 
 ## Docker Hub
 
-L'image est disponible publiquement sur Docker Hub :
-- **Repository** : [kcofoni/pmwiki-mcp](https://hub.docker.com/r/kcofoni/pmwiki-mcp)
-- **Tag latest** : `kcofoni/pmwiki-mcp:latest`
+The image is publicly available on Docker Hub:
+- **Repository**: [kcofoni/pmwiki-mcp](https://hub.docker.com/r/kcofoni/pmwiki-mcp)
+- **Latest tag**: `kcofoni/pmwiki-mcp:latest`
+- **Stable version**: `kcofoni/pmwiki-mcp:v1.0.1`
 
-Pour récupérer la dernière version :
+To pull the latest version:
 ```bash
 docker pull kcofoni/pmwiki-mcp:latest
 ```
 
-## Architecture technique
+To pull a specific version:
+```bash
+docker pull kcofoni/pmwiki-mcp:v1.0.1
+```
 
-- **Langage** : Python 3.11
-- **Framework web** : Starlette + Uvicorn
-- **Protocole** : MCP over SSE
-- **Format des pages** : PmWiki (fichiers dans `wiki.d/`)
+## Technical Architecture
+
+- **Language**: Python 3.11
+- **Web Framework**: Starlette + Uvicorn
+- **Protocol**: MCP over SSE
+- **Page Format**: PmWiki (files in `wiki.d/`)
 
 ## Logs
 
 ```bash
-# Voir les logs en temps réel
+# View logs in real-time
 docker logs -f pmwiki-mcp-server
 
-# Dernières 50 lignes
+# Last 50 lines
 docker logs --tail 50 pmwiki-mcp-server
 ```
 
-## Dépannage
+## Troubleshooting
 
-### Le serveur ne démarre pas
+### Server won't start
 
-Vérifiez que le répertoire wiki existe :
+Check that the wiki directory exists:
 ```bash
 ls -la /home/docker/appdata/html/wiki.d
 ```
 
-### Erreur 404 sur une page
+### 404 error on a page
 
-Utilisez l'outil `list_pages` pour voir toutes les pages disponibles. Le format exact du nom de fichier PmWiki doit être utilisé (ex: `Main.HomePage` et non `Main/HomePage` pour le fichier).
+Use the `list_pages` tool to see all available pages. The exact PmWiki filename format must be used (e.g., `Main.HomePage` not `Main/HomePage` for the file).
 
-### Connexion SSE échoue
+### SSE connection fails
 
-Vérifiez que le port 3000 est bien exposé :
+Check that port 3000 is properly exposed:
 ```bash
 docker ps | grep pmwiki-mcp-server
 ```
 
-## Développement
+## Development
 
-### Structure des fichiers
+### File Structure
 
 ```
 pmwiki-mcp/
-├── pmwiki_mcp_server.py    # Serveur MCP
-├── requirements.txt         # Dépendances Python
-├── Dockerfile              # Image Docker
-├── docker-compose.yml      # Configuration Docker Compose
-└── README.md              # Cette documentation
+├── pmwiki_mcp_server.py    # MCP server
+├── requirements.txt         # Python dependencies
+├── Dockerfile              # Docker image
+├── docker-compose.yml      # Docker Compose configuration
+├── README.md              # This documentation (English)
+└── README_fr.md           # French documentation
 ```
 
-### Modification du code
+### Code Modification
 
-Après modification du code :
+After modifying the code:
 ```bash
 docker compose up -d --build
 ```

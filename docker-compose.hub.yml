@@ -7,7 +7,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Remplacez par le chemin réel vers votre wiki.d
+      # Replace with the actual path to your wiki.d
       - /home/docker/appdata/html/wiki.d:/wiki_data:ro
     environment:
       - WIKI_DIR=/wiki_data

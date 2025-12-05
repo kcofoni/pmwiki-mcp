@@ -1,0 +1,1 @@
+MCP server providing LLMs read-only access to PmWiki content via SSE transport for AI assistants.

@@ -3,13 +3,13 @@ version: '3.8'
 services:
   pmwiki-mcp:
     image: kcofoni/pmwiki-mcp:latest
-    # Pour construire localement au lieu d'utiliser l'image Docker Hub, commentez la ligne ci-dessus et décommentez celle ci-dessous :
+    # To build locally instead of using the Docker Hub image, comment out the line above and uncomment the one below:
     # build: .
     container_name: pmwiki-mcp-server
     ports:
       - "3000:3000"
     volumes:
-      # Remplacez par le chemin réel vers votre wiki.d
+      # Replace with the actual path to your wiki.d
       - /home/docker/appdata/html/wiki.d:/wiki_data:ro
     environment:
       - WIKI_DIR=/wiki_data

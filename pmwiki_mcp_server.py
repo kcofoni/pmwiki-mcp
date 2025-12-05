@@ -1,15 +1,14 @@
 """
-Serveur MCP (Model Context Protocol) pour PmWiki.
+MCP (Model Context Protocol) server for PmWiki.
 
-Ce serveur expose les pages d'un wiki PmWiki via le protocole MCP en utilisant
-le transport SSE (Server-Sent Events). Il permet à un LLM d'interagir avec le wiki
-pour lire, rechercher et lister les pages.
+This server exposes PmWiki pages via the MCP protocol using SSE (Server-Sent Events)
+transport. It allows an LLM to interact with the wiki to read, search, and list pages.
 
-Fonctionnalités :
-- Lecture de pages wiki
-- Recherche de texte dans le wiki
-- Listage des pages disponibles
-- Exposition des pages comme ressources MCP
+Features:
+- Read wiki pages
+- Search text across the wiki
+- List available pages
+- Expose pages as MCP resources
 """
 import asyncio
 import logging
@@ -25,28 +24,28 @@ from starlette.applications import Starlette
 from starlette.responses import Response
 from starlette.routing import Mount, Route
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Créer le serveur MCP
+# Create the MCP server
 mcp_server = Server("pmwiki-server")
 
-# Le répertoire sera monté depuis le volume Docker
+# The directory will be mounted from the Docker volume
 WIKI_DIR = os.getenv("WIKI_DIR", "/wiki_data")
 
 
 def parse_pmwiki_file(filepath):
-    """Parse un fichier PmWiki et extrait le contenu"""
+    """Parse a PmWiki file and extract its content"""
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
-        # Extraire le texte après "text="
+        # Extract text after "text="
         match = re.search(r"text=(.+?)(?:\n[a-z]+=|$)", content, re.DOTALL)
         if match:
             text = match.group(1)
-            # Décoder le format PmWiki
+            # Decode PmWiki format
             text = text.replace("%0a", "\n")
             text = text.replace("%25", "%")
             text = text.replace("%22", '"')
@@ -55,22 +54,22 @@ def parse_pmwiki_file(filepath):
             return text
         return ""
     except Exception as e:
-        logger.error("Erreur lors de la lecture de %s: %s", filepath, str(e))
-        return f"Erreur lors de la lecture: {str(e)}"
+        logger.error("Error reading %s: %s", filepath, str(e))
+        return f"Error reading file: {str(e)}"
 
 
 def get_page_title(filename):
-    """Extrait le titre de la page depuis le nom de fichier"""
+    """Extract page title from filename"""
     return filename.replace(".", "/")
 
 
 @mcp_server.list_resources()
 async def list_resources() -> list[Resource]:
-    """Liste toutes les pages du wiki comme ressources"""
+    """List all wiki pages as resources"""
     resources = []
 
     if not os.path.exists(WIKI_DIR):
-        logger.warning("Le répertoire %s n'existe pas", WIKI_DIR)
+        logger.warning("Directory %s does not exist", WIKI_DIR)
         return resources
 
     try:
@@ -85,28 +84,28 @@ async def list_resources() -> list[Resource]:
                         uri=f"pmwiki://{filename}",
                         name=get_page_title(filename),
                         mimeType="text/plain",
-                        description=f"Page wiki: {get_page_title(filename)}",
+                        description=f"Wiki page: {get_page_title(filename)}",
                     )
                 )
 
-        logger.info("Trouvé %d pages wiki", len(resources))
+        logger.info("Found %d wiki pages", len(resources))
     except Exception as e:
-        logger.error("Erreur lors du listing des ressources: %s", str(e))
+        logger.error("Error listing resources: %s", str(e))
 
     return resources
 
 
 @mcp_server.read_resource()
 async def read_resource(uri: str) -> str:
-    """Lit le contenu d'une page wiki"""
+    """Read the content of a wiki page"""
     if not uri.startswith("pmwiki://"):
-        raise ValueError("URI invalide")
+        raise ValueError("Invalid URI")
 
     filename = uri.replace("pmwiki://", "")
     filepath = os.path.join(WIKI_DIR, filename)
 
     if not os.path.exists(filepath):
-        raise FileNotFoundError(f"Page {filename} introuvable")
+        raise FileNotFoundError(f"Page {filename} not found")
 
     content = parse_pmwiki_file(filepath)
     return content
@@ -114,21 +113,21 @@ async def read_resource(uri: str) -> str:
 
 @mcp_server.list_tools()
 async def list_tools() -> list[Tool]:
-    """Liste les outils disponibles"""
+    """List available tools"""
     return [
         Tool(
             name="search_wiki",
-            description="Recherche du texte dans toutes les pages du wiki PmWiki. Retourne les pages contenant le texte recherché avec un extrait du contexte.",
+            description="Search for text across all PmWiki pages. Returns pages containing the search text with a context snippet.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Texte à rechercher dans le wiki",
+                        "description": "Text to search for in the wiki",
                     },
                     "case_sensitive": {
                         "type": "boolean",
-                        "description": "Recherche sensible à la casse (par défaut: false)",
+                        "description": "Case-sensitive search (default: false)",
                         "default": False,
                     },
                 },
@@ -137,13 +136,13 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="read_page",
-            description="Lit le contenu complet d'une page wiki spécifique. Utilisez le format 'Group.PageName' ou 'Group/PageName'.",
+            description="Read the complete content of a specific wiki page. Use the format 'Group.PageName' or 'Group/PageName'.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "page_name": {
                         "type": "string",
-                        "description": "Nom de la page (ex: Main.HomePage ou Main/HomePage)",
+                        "description": "Page name (e.g., Main.HomePage or Main/HomePage)",
                     }
                 },
                 "required": ["page_name"],
@@ -151,13 +150,13 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="list_pages",
-            description="Liste toutes les pages disponibles dans le wiki, optionnellement filtrées par groupe.",
+            description="List all available pages in the wiki, optionally filtered by group.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "group": {
                         "type": "string",
-                        "description": "Nom du groupe pour filtrer les pages (optionnel)",
+                        "description": "Group name to filter pages (optional)",
                     }
                 },
             },
@@ -167,7 +166,7 @@ async def list_tools() -> list[Tool]:
 
 @mcp_server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
-    """Exécute un outil"""
+    """Execute a tool"""
 
     if name == "search_wiki":
         query = arguments["query"]
@@ -181,7 +180,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             return [
                 TextContent(
                     type="text",
-                    text=f"Erreur: Le répertoire wiki {WIKI_DIR} n'existe pas",
+                    text=f"Error: Wiki directory {WIKI_DIR} does not exist",
                 )
             ]
 
@@ -197,7 +196,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             search_content = content if case_sensitive else content.lower()
 
             if query in search_content:
-                # Trouver le contexte autour de la première occurrence
+                # Find context around the first occurrence
                 index = search_content.find(query)
                 start = max(0, index - 100)
                 end = min(len(content), index + 100)
@@ -209,26 +208,26 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
         if not results:
             return [
-                TextContent(type="text", text=f"Aucun résultat trouvé pour '{query}'")
+                TextContent(type="text", text=f"No results found for '{query}'")
             ]
 
-        result_text = f"Trouvé {len(results)} résultat(s) pour '{query}':\n\n"
-        for r in results[:10]:  # Limiter à 10 résultats
+        result_text = f"Found {len(results)} result(s) for '{query}':\n\n"
+        for r in results[:10]:  # Limit to 10 results
             result_text += f"**{r['page']}**\n{r['snippet']}\n\n"
 
         if len(results) > 10:
-            result_text += f"\n... et {len(results) - 10} autres résultats"
+            result_text += f"\n... and {len(results) - 10} more results"
 
         return [TextContent(type="text", text=result_text)]
 
     elif name == "read_page":
         page_name = arguments["page_name"]
-        # Convertir Main/HomePage en Main.PageName
+        # Convert Main/HomePage to Main.PageName
         filename = page_name.replace("/", ".")
         filepath = os.path.join(WIKI_DIR, filename)
 
         if not os.path.exists(filepath):
-            # Essayer de lister les pages similaires
+            # Try to list similar pages
             similar = []
             search_term = page_name.lower().replace("/", ".").replace(".", "")
 
@@ -238,14 +237,14 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
             suggestion = ""
             if similar:
-                suggestion = "\n\nPages similaires trouvées:\n" + "\n".join(
+                suggestion = "\n\nSimilar pages found:\n" + "\n".join(
                     [f"- {p}" for p in similar[:5]]
                 )
 
             return [
                 TextContent(
                     type="text",
-                    text=f"Page '{page_name}' introuvable.{suggestion}\n\nUtilisez 'list_pages' pour voir toutes les pages disponibles.",
+                    text=f"Page '{page_name}' not found.{suggestion}\n\nUse 'list_pages' to see all available pages.",
                 )
             ]
 
@@ -260,7 +259,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             return [
                 TextContent(
                     type="text",
-                    text=f"Erreur: Le répertoire wiki {WIKI_DIR} n'existe pas",
+                    text=f"Error: Wiki directory {WIKI_DIR} does not exist",
                 )
             ]
 
@@ -281,45 +280,45 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             pages.append(page_title)
 
         if not pages:
-            msg = "Aucune page trouvée"
+            msg = "No pages found"
             if group_filter:
-                msg += f" dans le groupe '{group_filter}'"
+                msg += f" in group '{group_filter}'"
             return [TextContent(type="text", text=msg)]
 
-        # Grouper les pages par groupe
+        # Group pages by group
         grouped = {}
         for page in pages:
             if "/" in page:
                 group = page.split("/")[0]
             else:
-                group = "Racine"
+                group = "Root"
 
             if group not in grouped:
                 grouped[group] = []
             grouped[group].append(page)
 
-        result_text = f"Pages disponibles ({len(pages)}):\n\n"
+        result_text = f"Available pages ({len(pages)}):\n\n"
         for group, group_pages in sorted(grouped.items()):
             result_text += f"**{group}** ({len(group_pages)} pages)\n"
-            for page in group_pages[:10]:  # Limiter l'affichage
+            for page in group_pages[:10]:  # Limit display
                 result_text += f"  - {page}\n"
             if len(group_pages) > 10:
-                result_text += f"  ... et {len(group_pages) - 10} autres pages\n"
+                result_text += f"  ... and {len(group_pages) - 10} more pages\n"
             result_text += "\n"
 
         return [TextContent(type="text", text=result_text)]
 
     else:
-        return [TextContent(type="text", text=f"Outil inconnu: {name}")]
+        return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
 
 async def run_sse_server():
-    """Démarre le serveur en mode SSE"""
-    # Créer le transport SSE
+    """Start the server in SSE mode"""
+    # Create the SSE transport
     sse = SseServerTransport("/messages/")
 
     async def handle_sse(request):
-        """Gère les connexions SSE (GET /sse)"""
+        """Handle SSE connections (GET /sse)"""
         async with sse.connect_sse(
             request.scope, request.receive, request._send
         ) as streams:
@@ -330,7 +329,7 @@ async def run_sse_server():
             )
         return Response()
 
-    # Créer l'application Starlette
+    # Create the Starlette application
     app = Starlette(
         debug=True,
         routes=[
@@ -345,7 +344,7 @@ async def run_sse_server():
 
 
 if __name__ == "__main__":
-    logger.info("Démarrage du serveur MCP PmWiki en mode SSE sur le port 3000")
-    logger.info("Répertoire wiki: %s", WIKI_DIR)
+    logger.info("Starting PmWiki MCP server in SSE mode on port 3000")
+    logger.info("Wiki directory: %s", WIKI_DIR)
 
     asyncio.run(run_sse_server())
