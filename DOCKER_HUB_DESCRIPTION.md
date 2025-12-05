@@ -110,12 +110,13 @@ curl -N http://localhost:3000/sse
 
 ## Source Code
 
-- GitHub: [Your repository URL here]
-- Issues: [Your issues URL here]
+- GitHub: https://github.com/kcofoni/pmwiki-mcp
+- Issues: https://github.com/kcofoni/pmwiki-mcp/issues
+- Documentation: https://github.com/kcofoni/pmwiki-mcp#readme
 
 ## License
 
-[Your license here]
+MIT License - See [LICENSE](https://github.com/kcofoni/pmwiki-mcp/blob/main/LICENSE) for details
 
 ---
 
