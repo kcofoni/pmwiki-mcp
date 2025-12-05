@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.2] - 2025-12-05
+
+### Added
+- MIT License file
+- License section in README files
+
+### Changed
+- Translated test_server.sh to English
+
 ## [v1.0.1] - 2025-12-03
 
 ### Changed

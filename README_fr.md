@@ -195,3 +195,7 @@ Après modification du code :
 ```bash
 docker compose up -d --build
 ```
+
+## Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
