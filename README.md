@@ -135,7 +135,7 @@ volumes:
 The image is publicly available on Docker Hub:
 - **Repository**: [kcofoni/pmwiki-mcp](https://hub.docker.com/r/kcofoni/pmwiki-mcp)
 - **Latest tag**: `kcofoni/pmwiki-mcp:latest`
-- **Stable version**: `kcofoni/pmwiki-mcp:v1.0.1`
+- **Stable version**: `kcofoni/pmwiki-mcp:v1.0.2`
 
 To pull the latest version:
 ```bash
@@ -144,7 +144,7 @@ docker pull kcofoni/pmwiki-mcp:latest
 
 To pull a specific version:
 ```bash
-docker pull kcofoni/pmwiki-mcp:v1.0.1
+docker pull kcofoni/pmwiki-mcp:v1.0.2
 ```
 
 ## Technical Architecture
