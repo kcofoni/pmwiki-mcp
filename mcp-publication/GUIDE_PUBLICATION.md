@@ -63,39 +63,51 @@ docker push kcofoni/pmwiki-mcp:v1.0.2
 docker push kcofoni/pmwiki-mcp:latest
 ```
 
-### Étape 3 : Publier avec mcp-publisher
+### Étape 3 : S'authentifier avec mcp-publisher
 
-L'outil `mcp-publisher` simplifie grandement le processus de publication. Depuis le répertoire racine du projet :
+Avant de publier, vous devez vous authentifier auprès du registre MCP :
 
 ```bash
 # Se placer dans le répertoire contenant server.json
 cd mcp-publication/pmwiki
 
-# Lancer la publication interactive
+# S'authentifier (OAuth GitHub ou DNS)
+mcp-publisher login
+```
+
+Suivez le processus d'authentification. Pour les espaces de noms basés sur GitHub (comme `io.github.nomutilisateur/*`), vous vous authentifierez via OAuth GitHub.
+
+### Étape 4 : Publier avec mcp-publisher
+
+Une fois authentifié, publiez votre serveur :
+
+```bash
+# Soumettre votre serveur au registre
 mcp-publisher publish
 ```
 
 L'outil `mcp-publisher` va :
 1. ✅ Valider votre fichier `server.json` selon le schéma officiel
-2. ✅ Vérifier que l'image Docker existe et est accessible
-3. ✅ Forker automatiquement le registre MCP si nécessaire
-4. ✅ Créer une branche avec un nom approprié
-5. ✅ Copier votre `server.json` au bon emplacement
-6. ✅ Créer un commit avec un message approprié
-7. ✅ Pousser les changements sur votre fork
-8. ✅ Créer automatiquement la Pull Request
+2. ✅ Authentifier la propriété de votre espace de noms (ex: vérifier que vous possédez le compte GitHub)
+3. ✅ Soumettre les métadonnées de votre serveur directement à l'API du registre
+4. ✅ Le registre vérifiera que l'image Docker existe et est accessible
 
-### Étape 4 : Options Avancées avec mcp-publisher
+**Note** : Contrairement aux workflows basés sur Git, `mcp-publisher` soumet directement au registre via API. Il ne crée **pas** de forks, branches, commits ou pull requests. La soumission est immédiate et votre serveur apparaîtra dans le registre une fois approuvé.
 
-#### Publication Non-Interactive
+### Étape 5 : Vérifier la Publication
 
-Pour automatiser la publication (CI/CD par exemple) :
+Après une publication réussie :
 
 ```bash
-mcp-publisher publish \
-  --server-json ./server.json \
-  --non-interactive
+# Vous verrez un message du type :
+# ✓ Successfully published io.github.kcofoni/pmwiki-mcp@1.0.2
 ```
+
+Votre serveur sera disponible dans le registre à :
+- **Registre** : https://registry.modelcontextprotocol.io
+- **Recherche** : Les utilisateurs peuvent trouver votre serveur en recherchant "pmwiki"
+
+### Options Avancées
 
 #### Mise à Jour d'une Publication Existante
 
@@ -107,20 +119,15 @@ Pour mettre à jour un serveur déjà publié :
 mcp-publisher publish
 ```
 
-L'outil détectera automatiquement qu'il s'agit d'une mise à jour.
+L'outil détectera automatiquement et mettra à jour votre entrée dans le registre.
 
-### Étape 5 : Suivre la Pull Request
+#### Déconnexion
 
-Après que `mcp-publisher` ait créé la PR :
+Pour effacer votre authentification :
 
-1. Surveillez les retours des mainteneurs du registre MCP
-2. Répondez aux modifications demandées
-3. Si des changements sont nécessaires :
-   ```bash
-   # Modifier server.json selon les retours
-   # Puis relancer la publication (cela mettra à jour la PR existante)
-   mcp-publisher publish
-   ```
+```bash
+mcp-publisher logout
+```
 
 ## Mise à Jour d'une Publication Existante
 
@@ -128,17 +135,18 @@ Lorsque vous publiez une nouvelle version :
 
 1. Mettez à jour [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) avec la nouvelle version
 2. Construisez et poussez la nouvelle image Docker
-3. Relancez simplement `mcp-publisher publish` - l'outil gèrera automatiquement la mise à jour
+3. Relancez simplement `mcp-publisher publish` - l'outil mettra automatiquement à jour l'entrée du registre
 
 ## Dépannage
 
-### La PR est Rejetée
+### La Publication Échoue avec des Erreurs de Validation
 
-Raisons courantes de rejet :
+Raisons courantes d'échec de validation :
 - **JSON Invalide** : Validez avec `jq . server.json`
 - **Image Docker Manquante** : Assurez-vous que l'image existe sur Docker Hub
 - **Schéma Incorrect** : Vérifiez par rapport au schéma JSON spécifié dans `$schema`
 - **Informations Incomplètes** : Assurez-vous que tous les champs requis sont remplis
+- **Authentification de l'Espace de Noms** : Vérifiez que vous êtes authentifié avec le bon compte GitHub pour votre espace de noms
 
 ### Image Docker Introuvable
 

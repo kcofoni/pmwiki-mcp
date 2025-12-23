@@ -69,39 +69,51 @@ docker push kcofoni/pmwiki-mcp:v1.0.2
 docker push kcofoni/pmwiki-mcp:latest
 ```
 
-### Step 3: Publish with mcp-publisher
+### Step 3: Authenticate with mcp-publisher
 
-The `mcp-publisher` tool greatly simplifies the publication process. From the project root directory:
+Before publishing, you need to authenticate with the MCP registry:
 
 ```bash
 # Navigate to the directory containing server.json
 cd mcp-publication/pmwiki
 
-# Launch the interactive publication
+# Authenticate (GitHub OAuth or DNS-based)
+mcp-publisher login
+```
+
+Follow the authentication flow. For GitHub-based namespaces (like `io.github.username/*`), you'll authenticate via GitHub OAuth.
+
+### Step 4: Publish with mcp-publisher
+
+Once authenticated, publish your server:
+
+```bash
+# Submit your server to the registry
 mcp-publisher publish
 ```
 
 The `mcp-publisher` tool will:
 1. ✅ Validate your `server.json` against the official schema
-2. ✅ Verify that the Docker image exists and is accessible
-3. ✅ Automatically fork the MCP registry if needed
-4. ✅ Create a branch with an appropriate name
-5. ✅ Copy your `server.json` to the correct location
-6. ✅ Create a commit with an appropriate message
-7. ✅ Push changes to your fork
-8. ✅ Automatically create the Pull Request
+2. ✅ Authenticate your namespace ownership (e.g., verify you own the GitHub account)
+3. ✅ Submit your server metadata directly to the registry API
+4. ✅ The registry will verify that the Docker image exists and is accessible
 
-### Step 4: Advanced Options with mcp-publisher
+**Note**: Unlike Git-based workflows, `mcp-publisher` submits directly to the registry via API. It does **not** create forks, branches, commits, or pull requests. The submission is immediate and your server will appear in the registry once approved.
 
-#### Non-Interactive Publication
+### Step 5: Verify Publication
 
-To automate the publication (for CI/CD for example):
+After successful publication:
 
 ```bash
-mcp-publisher publish \
-  --server-json ./server.json \
-  --non-interactive
+# You'll see output like:
+# ✓ Successfully published io.github.kcofoni/pmwiki-mcp@1.0.2
 ```
+
+Your server will be available in the registry at:
+- **Registry**: https://registry.modelcontextprotocol.io
+- **Search**: Users can find your server by searching for "pmwiki"
+
+### Advanced Options
 
 #### Updating an Existing Publication
 
@@ -113,20 +125,15 @@ To update an already published server:
 mcp-publisher publish
 ```
 
-The tool will automatically detect that this is an update.
+The tool will automatically detect and update your existing registry entry.
 
-### Step 5: Monitor the Pull Request
+#### Logout
 
-After `mcp-publisher` has created the PR:
+To clear your authentication:
 
-1. Watch for feedback from the MCP registry maintainers
-2. Respond to any requested changes
-3. If changes are needed:
-   ```bash
-   # Modify server.json based on feedback
-   # Then rerun publication (this will update the existing PR)
-   mcp-publisher publish
-   ```
+```bash
+mcp-publisher logout
+```
 
 ## Updating an Existing Publication
 
@@ -134,17 +141,18 @@ When you release a new version:
 
 1. Update [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) with the new version
 2. Build and push the new Docker image
-3. Simply rerun `mcp-publisher publish` - the tool will automatically handle the update
+3. Simply rerun `mcp-publisher publish` - the tool will automatically update the registry entry
 
 ## Troubleshooting
 
-### PR Gets Rejected
+### Publication Fails with Validation Errors
 
-Common reasons for rejection:
+Common reasons for validation failures:
 - **Invalid JSON**: Validate with `jq . server.json`
 - **Missing Docker Image**: Ensure the image exists on Docker Hub
 - **Incorrect Schema**: Check against the JSON schema specified in `$schema`
 - **Incomplete Information**: Ensure all required fields are filled
+- **Namespace Authentication**: Verify you're authenticated with the correct GitHub account for your namespace
 
 ### Docker Image Not Found
 
