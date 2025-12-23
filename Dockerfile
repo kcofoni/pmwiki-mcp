@@ -17,4 +17,7 @@ COPY pmwiki_mcp_server.py .
 # Expose SSE port
 EXPOSE 3000
 
+# Add this label for the MCP registry
+LABEL io.modelcontextprotocol.server.name="io.github.kcofoni/pmwiki-mcp"
+
 CMD ["python", "-u", "pmwiki_mcp_server.py"]
