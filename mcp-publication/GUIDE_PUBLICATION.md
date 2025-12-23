@@ -12,14 +12,13 @@ Avant de publier, assurez-vous d'avoir :
    curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.4.0/mcp-publisher_linux_amd64.tar.gz" | tar xz && sudo mv mcp-publisher /usr/local/bin/.
    ```
 
-2. **Compte GitHub** : Vous devez avoir un compte GitHub avec accès au dépôt
-3. **GitHub CLI (`gh`)** : Installez-le depuis https://cli.github.com/
-4. **Docker et Docker Hub** : Pour construire et publier l'image
-5. **server.json à jour** : Le fichier `server.json` doit être correctement configuré
+2. **Compte GitHub** : Vous devez avoir un compte GitHub pour l'authentification de l'espace de noms (ex: `io.github.nomutilisateur/*`)
+3. **Docker et Docker Hub** : Pour construire et publier l'image Docker
+4. **server.json à jour** : Le fichier `server.json` doit être correctement configuré
 
 ## Installation Rapide de mcp-publisher
 
-Si `mcp-publisher` n'est pas encore installé sur votre système Debian 12 :
+Si `mcp-publisher` n'est pas encore installé sur votre système :
 
 ```bash
 # Télécharger et installer le binaire depuis GitHub
@@ -92,7 +91,7 @@ L'outil `mcp-publisher` va :
 3. ✅ Soumettre les métadonnées de votre serveur directement à l'API du registre
 4. ✅ Le registre vérifiera que l'image Docker existe et est accessible
 
-**Note** : Contrairement aux workflows basés sur Git, `mcp-publisher` soumet directement au registre via API. Il ne crée **pas** de forks, branches, commits ou pull requests. La soumission est immédiate et votre serveur apparaîtra dans le registre une fois approuvé.
+**Note** : Contrairement aux workflows basés sur Git, `mcp-publisher` soumet directement au registre via API. Il ne crée **pas** de forks, branches, commits ou pull requests. La soumission est traitée immédiatement par le registre.
 
 ### Étape 5 : Vérifier la Publication
 
@@ -109,18 +108,6 @@ Votre serveur sera disponible dans le registre à :
 
 ### Options Avancées
 
-#### Mise à Jour d'une Publication Existante
-
-Pour mettre à jour un serveur déjà publié :
-
-```bash
-# Mettez d'abord à jour la version dans server.json
-# Puis republier
-mcp-publisher publish
-```
-
-L'outil détectera automatiquement et mettra à jour votre entrée dans le registre.
-
 #### Déconnexion
 
 Pour effacer votre authentification :
@@ -135,7 +122,7 @@ Lorsque vous publiez une nouvelle version :
 
 1. Mettez à jour [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) avec la nouvelle version
 2. Construisez et poussez la nouvelle image Docker
-3. Relancez simplement `mcp-publisher publish` - l'outil mettra automatiquement à jour l'entrée du registre
+3. Relancez simplement `mcp-publisher publish` - l'outil détectera automatiquement et mettra à jour votre entrée dans le registre
 
 ## Dépannage
 

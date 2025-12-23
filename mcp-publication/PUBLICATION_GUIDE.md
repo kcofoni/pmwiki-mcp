@@ -12,10 +12,9 @@ Before publishing, ensure you have:
    curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.4.0/mcp-publisher_linux_amd64.tar.gz" | tar xz && sudo mv mcp-publisher /usr/local/bin/.
    ```
 
-2. **GitHub Account**: You need a GitHub account with access to the repository
-3. **GitHub CLI (`gh`)**: Install it from https://cli.github.com/
-4. **Docker and Docker Hub**: To build and publish the image
-5. **Updated server.json**: The `server.json` file must be properly configured
+2. **GitHub Account**: You need a GitHub account for namespace authentication (e.g., `io.github.username/*`)
+3. **Docker and Docker Hub**: To build and publish the Docker image
+4. **Updated server.json**: The `server.json` file must be properly configured
 
 ## Quick Installation of mcp-publisher
 
@@ -98,7 +97,7 @@ The `mcp-publisher` tool will:
 3. ✅ Submit your server metadata directly to the registry API
 4. ✅ The registry will verify that the Docker image exists and is accessible
 
-**Note**: Unlike Git-based workflows, `mcp-publisher` submits directly to the registry via API. It does **not** create forks, branches, commits, or pull requests. The submission is immediate and your server will appear in the registry once approved.
+**Note**: Unlike Git-based workflows, `mcp-publisher` submits directly to the registry via API. It does **not** create forks, branches, commits, or pull requests. The submission is processed immediately by the registry.
 
 ### Step 5: Verify Publication
 
@@ -115,18 +114,6 @@ Your server will be available in the registry at:
 
 ### Advanced Options
 
-#### Updating an Existing Publication
-
-To update an already published server:
-
-```bash
-# First update the version in server.json
-# Then republish
-mcp-publisher publish
-```
-
-The tool will automatically detect and update your existing registry entry.
-
 #### Logout
 
 To clear your authentication:
@@ -141,7 +128,7 @@ When you release a new version:
 
 1. Update [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) with the new version
 2. Build and push the new Docker image
-3. Simply rerun `mcp-publisher publish` - the tool will automatically update the registry entry
+3. Simply rerun `mcp-publisher publish` - the tool will automatically detect and update your existing registry entry
 
 ## Troubleshooting
 
