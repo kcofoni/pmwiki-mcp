@@ -52,21 +52,43 @@ Key fields to verify:
 - `repository.url`: Your GitHub repository URL
 - `packages[0].identifier`: Docker image with correct version tag
 
-### Step 2: Ensure Docker Image is Published
+### Step 2: Build and Publish Docker Image
 
-Before submitting to the MCP registry, verify your Docker image is available on Docker Hub:
+The MCP registry requires Docker images to support the `linux/amd64` architecture. The build method depends on your platform:
+
+#### Option A: Simple Build (Linux AMD64, Debian, Ubuntu, etc.)
+
+If building from an AMD64 Linux machine (Debian 12, Ubuntu, etc.), a simple build works:
 
 ```bash
-# Build the Docker image
-docker build -t kcofoni/pmwiki-mcp:v1.0.2 .
-
-# Tag as latest
-docker tag kcofoni/pmwiki-mcp:v1.0.2 kcofoni/pmwiki-mcp:latest
+# Build the image
+docker build -t kcofoni/pmwiki-mcp:v1.0.3 -t kcofoni/pmwiki-mcp:latest .
 
 # Push to Docker Hub
-docker push kcofoni/pmwiki-mcp:v1.0.2
+docker push kcofoni/pmwiki-mcp:v1.0.3
 docker push kcofoni/pmwiki-mcp:latest
 ```
+
+#### Option B: Multi-Architecture Build (Mac, Windows, or for ARM64 Support)
+
+If building from a Mac (ARM64) or wanting to support multiple architectures:
+
+```bash
+# 1. Create and use a multi-architecture builder (one-time setup)
+docker buildx create --use --name multiarch
+
+# 2. Build and push for linux/amd64 and linux/arm64
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t kcofoni/pmwiki-mcp:v1.0.3 \
+  -t kcofoni/pmwiki-mcp:latest \
+  --push \
+  .
+```
+
+**Note**: The buildx `--push` flag directly uploads to Docker Hub. Multi-architecture images cannot be loaded locally.
+
+**⚠️ Warning**: Building from a Mac without buildx creates ARM64-only images, causing publication errors (see Troubleshooting).
 
 ### Step 3: Authenticate with mcp-publisher
 
@@ -76,11 +98,11 @@ Before publishing, you need to authenticate with the MCP registry:
 # Navigate to the directory containing server.json
 cd mcp-publication/pmwiki
 
-# Authenticate (GitHub OAuth or DNS-based)
-mcp-publisher login
+# Authenticate via GitHub OAuth
+mcp-publisher login github
 ```
 
-Follow the authentication flow. For GitHub-based namespaces (like `io.github.username/*`), you'll authenticate via GitHub OAuth.
+Follow the GitHub OAuth authentication flow. This allows you to publish to your `io.github.username/*` namespace.
 
 ### Step 4: Publish with mcp-publisher
 
@@ -119,7 +141,7 @@ Your server will be available in the registry at:
 To clear your authentication:
 
 ```bash
-mcp-publisher logout
+mcp-publisher logout github
 ```
 
 ## Updating an Existing Publication
@@ -127,7 +149,7 @@ mcp-publisher logout
 When you release a new version:
 
 1. Update [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) with the new version
-2. Build and push the new Docker image
+2. Build and push the new Docker image (Option A or B depending on your platform, see Step 2)
 3. Simply rerun `mcp-publisher publish` - the tool will automatically detect and update your existing registry entry
 
 ## Troubleshooting
@@ -150,6 +172,19 @@ docker pull kcofoni/pmwiki-mcp:v1.0.2
 
 # Check it's not private on Docker Hub
 ```
+
+### Error "no child with platform linux/amd64"
+
+If you get this error:
+```
+Error: publish failed: server returned status 400: {"title":"Bad Request","status":400,"detail":"Failed to publish server","errors":[{"message":"registry validation failed for package 0: no child with platform linux/amd64 in index"}]}
+```
+
+**Cause**: Your Docker image doesn't support the `linux/amd64` architecture (required by the MCP registry). This occurs when building from a Mac (ARM64) with a simple `docker build`.
+
+**Solutions**:
+1. **On Mac**: Use Docker Buildx (Option B in Step 2)
+2. **Alternative**: Build from an AMD64 Linux machine (Debian, Ubuntu, etc.) using simple `docker build` (Option A in Step 2)
 
 ### Schema Validation Errors
 

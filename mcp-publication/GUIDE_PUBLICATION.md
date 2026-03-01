@@ -46,21 +46,43 @@ Champs clés à vérifier :
 - `repository.url` : L'URL de votre dépôt GitHub
 - `packages[0].identifier` : Image Docker avec le bon tag de version
 
-### Étape 2 : S'assurer que l'Image Docker est Publiée
+### Étape 2 : Construire et Publier l'Image Docker
 
-Avant de soumettre au registre MCP, vérifiez que votre image Docker est disponible sur Docker Hub :
+Le registre MCP requiert que les images Docker supportent l'architecture `linux/amd64`. La méthode de construction dépend de votre plateforme :
+
+#### Option A : Construction Simple (Linux AMD64, Debian, Ubuntu, etc.)
+
+Si vous construisez depuis une machine Linux AMD64 (Debian 12, Ubuntu, etc.), un build simple suffit :
 
 ```bash
-# Construire l'image Docker
-docker build -t kcofoni/pmwiki-mcp:v1.0.2 .
-
-# Taguer comme latest
-docker tag kcofoni/pmwiki-mcp:v1.0.2 kcofoni/pmwiki-mcp:latest
+# Construire l'image
+docker build -t kcofoni/pmwiki-mcp:v1.0.3 -t kcofoni/pmwiki-mcp:latest .
 
 # Pousser sur Docker Hub
-docker push kcofoni/pmwiki-mcp:v1.0.2
+docker push kcofoni/pmwiki-mcp:v1.0.3
 docker push kcofoni/pmwiki-mcp:latest
 ```
+
+#### Option B : Construction Multi-Architecture (Mac, Windows, ou pour supporter ARM64)
+
+Si vous construisez depuis un Mac (ARM64) ou souhaitez supporter plusieurs architectures :
+
+```bash
+# 1. Créer et utiliser un builder multi-architecture (une seule fois)
+docker buildx create --use --name multiarch
+
+# 2. Construire et pousser pour linux/amd64 et linux/arm64
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t kcofoni/pmwiki-mcp:v1.0.3 \
+  -t kcofoni/pmwiki-mcp:latest \
+  --push \
+  .
+```
+
+**Note** : L'option `--push` de buildx envoie directement sur Docker Hub. Les images multi-architecture ne peuvent pas être chargées localement.
+
+**⚠️ Attention** : Si vous construisez depuis un Mac sans utiliser buildx, vous obtiendrez uniquement une image ARM64, ce qui provoquera une erreur lors de la publication (voir section Dépannage).
 
 ### Étape 3 : S'authentifier avec mcp-publisher
 
@@ -70,11 +92,11 @@ Avant de publier, vous devez vous authentifier auprès du registre MCP :
 # Se placer dans le répertoire contenant server.json
 cd mcp-publication/pmwiki
 
-# S'authentifier (OAuth GitHub ou DNS)
-mcp-publisher login
+# S'authentifier via GitHub OAuth
+mcp-publisher login github
 ```
 
-Suivez le processus d'authentification. Pour les espaces de noms basés sur GitHub (comme `io.github.nomutilisateur/*`), vous vous authentifierez via OAuth GitHub.
+Suivez le processus d'authentification OAuth GitHub. Cela vous permettra de publier dans votre espace de noms `io.github.nomutilisateur/*`.
 
 ### Étape 4 : Publier avec mcp-publisher
 
@@ -113,7 +135,7 @@ Votre serveur sera disponible dans le registre à :
 Pour effacer votre authentification :
 
 ```bash
-mcp-publisher logout
+mcp-publisher logout github
 ```
 
 ## Mise à Jour d'une Publication Existante
@@ -121,7 +143,7 @@ mcp-publisher logout
 Lorsque vous publiez une nouvelle version :
 
 1. Mettez à jour [`mcp-publication/pmwiki/server.json`](./pmwiki/server.json) avec la nouvelle version
-2. Construisez et poussez la nouvelle image Docker
+2. Construisez et poussez la nouvelle image Docker (Option A ou B selon votre plateforme, voir Étape 2)
 3. Relancez simplement `mcp-publisher publish` - l'outil détectera automatiquement et mettra à jour votre entrée dans le registre
 
 ## Dépannage
@@ -144,6 +166,19 @@ docker pull kcofoni/pmwiki-mcp:v1.0.2
 
 # Vérifier qu'elle n'est pas privée sur Docker Hub
 ```
+
+### Erreur "no child with platform linux/amd64"
+
+Si vous obtenez cette erreur :
+```
+Error: publish failed: server returned status 400: {"title":"Bad Request","status":400,"detail":"Failed to publish server","errors":[{"message":"registry validation failed for package 0: no child with platform linux/amd64 in index"}]}
+```
+
+**Cause** : Votre image Docker ne supporte pas l'architecture `linux/amd64` (requise par le registre MCP). Cela se produit lorsque vous construisez depuis un Mac (ARM64) avec un simple `docker build`.
+
+**Solutions** :
+1. **Sur Mac** : Utilisez Docker Buildx (Option B à l'Étape 2)
+2. **Alternative** : Construisez depuis une machine Linux AMD64 (Debian, Ubuntu, etc.) avec un simple `docker build` (Option A à l'Étape 2)
 
 ### Erreurs de Validation du Schéma
 
