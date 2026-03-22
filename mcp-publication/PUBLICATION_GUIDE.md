@@ -52,6 +52,17 @@ Key fields to verify:
 - `repository.url`: Your GitHub repository URL
 - `packages[0].identifier`: Docker image with correct version tag
 
+**Before building and pushing your Docker image**, you must authenticate with Docker Hub:
+
+```bash
+# Login to Docker Hub
+docker login
+```
+
+Enter your Docker Hub credentials (username and password, or a personal access token for better security).
+
+**💡 Tip**: For enhanced security, use a [personal access token](https://docs.docker.com/security/for-developers/access-tokens/) instead of your password. Create one at https://app.docker.com/settings/personal-access-tokens
+
 ### Step 2: Build and Publish Docker Image
 
 The MCP registry requires Docker images to support the `linux/amd64` architecture. The build method depends on your platform:

@@ -20,6 +20,7 @@ import uvicorn
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import Resource, TextContent, Tool
+from pydantic import AnyUrl
 from starlette.applications import Starlette
 from starlette.responses import Response
 from starlette.routing import Mount, Route
@@ -66,7 +67,7 @@ def get_page_title(filename):
 @mcp_server.list_resources()
 async def list_resources() -> list[Resource]:
     """List all wiki pages as resources"""
-    resources = []
+    resources: list[Resource] = []
 
     if not os.path.exists(WIKI_DIR):
         logger.warning("Directory %s does not exist", WIKI_DIR)
@@ -81,7 +82,7 @@ async def list_resources() -> list[Resource]:
             if os.path.isfile(filepath):
                 resources.append(
                     Resource(
-                        uri=f"pmwiki://{filename}",
+                        uri=AnyUrl(f"pmwiki://{filename}"),
                         name=get_page_title(filename),
                         mimeType="text/plain",
                         description=f"Wiki page: {get_page_title(filename)}",
@@ -286,7 +287,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             return [TextContent(type="text", text=msg)]
 
         # Group pages by group
-        grouped = {}
+        grouped: dict[str, list[str]] = {}
         for page in pages:
             if "/" in page:
                 group = page.split("/")[0]
@@ -322,10 +323,11 @@ async def run_sse_server():
         async with sse.connect_sse(
             request.scope, request.receive, request._send
         ) as streams:
+            initialization_options = mcp_server.create_initialization_options()
             await mcp_server.run(
                 streams[0],
                 streams[1],
-                mcp_server.create_initialization_options(),
+                initialization_options,
             )
         return Response()
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.kcofoni/pmwiki-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MCP server for searching and reading PmWiki pages with text queries and group filtering.",
   "repository": {
     "url": "https://github.com/kcofoni/pmwiki-mcp",
@@ -10,7 +10,7 @@
   "packages": [
     {
       "registryType": "oci",
-      "identifier": "docker.io/kcofoni/pmwiki-mcp:v1.0.3",
+      "identifier": "docker.io/kcofoni/pmwiki-mcp:v1.0.4",
       "transport": {
         "type": "sse",
         "url": "http://localhost:3000/sse"

@@ -46,6 +46,17 @@ Champs clés à vérifier :
 - `repository.url` : L'URL de votre dépôt GitHub
 - `packages[0].identifier` : Image Docker avec le bon tag de version
 
+**Avant de construire et pousser votre image Docker**, vous devez vous authentifier auprès de Docker Hub :
+
+```bash
+# Se connecter à Docker Hub
+docker login
+```
+
+Entrez vos identifiants Docker Hub (nom d'utilisateur et mot de passe, ou un token d'accès personnel pour plus de sécurité).
+
+**💡 Conseil** : Pour plus de sécurité, utilisez un [token d'accès personnel](https://docs.docker.com/security/for-developers/access-tokens/) au lieu de votre mot de passe. Créez-le sur https://app.docker.com/settings/personal-access-tokens
+
 ### Étape 2 : Construire et Publier l'Image Docker
 
 Le registre MCP requiert que les images Docker supportent l'architecture `linux/amd64`. La méthode de construction dépend de votre plateforme :

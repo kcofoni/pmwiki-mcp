@@ -1,5 +1,5 @@
 mcp==1.26.0
 pydantic==2.12.5
-uvicorn==0.41.0
+uvicorn==0.42.0
 starlette==0.52.1
-sse-starlette==3.3.2
+sse-starlette==3.3.3
